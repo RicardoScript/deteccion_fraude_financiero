@@ -1,161 +1,100 @@
 import streamlit as st
 from styles import apply_custom_styles
+from utils.helpers import RESUMEN
+import plotly.graph_objects as go
 
-# Configurar página
 st.set_page_config(
-    page_title="Fraud Detection System",
+    page_title="Detección de Fraude Financiero",
     page_icon="🔒",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Aplicar estilos CSS
 apply_custom_styles()
 
-# ----------------------------
-# HEADER
-# ----------------------------
+# Encabezado
 st.markdown("""
 <div class="header">
-    <h1>🔒 Detección de Fraude</h1>
-    <span>v1.0</span>
+    <h1>🔒 Detección de Fraude Financiero</h1>
 </div>
 """, unsafe_allow_html=True)
 
-# ----------------------------
-# DOS COLUMNAS: FORMULARIO Y RESULTADO (SIMULADO)
-# ----------------------------
-col1, col2 = st.columns([1, 1], gap="large")
+# Métricas principales en fila
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("### 📋 Datos de la transacción")
-        
-        # Campos de entrada (solo visuales, sin función)
-        st.number_input("Monto (€)", min_value=0.01, value=150.0, step=10.0, format="%.2f", key="amount")
-        st.selectbox("Tipo de transacción", ['Pago', 'Transferencia', 'Retiro', 'Compra en línea'], key="type")
-        st.selectbox("Categoría del comercio", ['Retail', 'Alimentación', 'Entretenimiento', 'Viajes', 'Tecnología', 'Salud'], key="category")
-        
-        col_hour, col_age = st.columns(2)
-        with col_hour:
-            st.slider("Hora (0-23)", 0, 23, 14, key="hour")
-        with col_age:
-            st.number_input("Antigüedad (días)", 0, value=365, key="age")
-        
-        st.slider("Frecuencia (última hora)", 0, 10, 1, key="freq")
-        
-        # Botón (solo visual, no hace nada)
-        st.button("🔍 Analizar transacción", use_container_width=True, key="analyze")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="card">
+        <div class="metric-label">Filas procesadas</div>
+        <div class="metric-value">{RESUMEN['filas_salida']:,}</div>
+        <div class="metric-change green">✓ Sin pérdida</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col2:
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("### 📊 Resultado del análisis")
-        
-        # Mostrar siempre un resultado de ejemplo
-        # Probabilidad simulada
-        prob = 0.78  # valor fijo para demostración
-        st.markdown(f"""
-        <div style="text-align: center; margin-bottom: 1rem;">
-            <div style="font-size: 0.9rem; color: #64748b;">Probabilidad de fraude</div>
-            <div style="font-size: 2.8rem; font-weight: 700; color: #0f172a;">{prob*100:.1f}%</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Gauge simulado con Plotly (estático)
-        import plotly.graph_objects as go
-        fig = go.Figure(go.Indicator(
-            mode = "gauge+number",
-            value = prob * 100,
-            title = {'text': "Riesgo"},
-            domain = {'x': [0, 1], 'y': [0, 1]},
-            gauge = {
-                'axis': {'range': [None, 100], 'tickwidth': 1},
-                'bar': {'color': "rgba(59, 130, 246, 0.8)"},
-                'steps': [
-                    {'range': [0, 30], 'color': "lightgreen"},
-                    {'range': [30, 70], 'color': "gold"},
-                    {'range': [70, 100], 'color': "salmon"}
-                ],
-                'threshold': {
-                    'line': {'color': "red", 'width': 4},
-                    'thickness': 0.75,
-                    'value': 70
-                }
-            }
-        ))
-        fig.update_layout(height=250, margin=dict(l=20, r=20, t=30, b=20))
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-        
-        # Etiqueta de fraude (simulada)
-        st.markdown("""
-        <div style="text-align: center;">
-            <span class="fraud-tag true">⚠️ FRAUDE DETECTADO</span>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="card">
+        <div class="metric-label">Columnas finales</div>
+        <div class="metric-value">{RESUMEN['columnas_salida']}</div>
+        <div class="metric-change blue">+{RESUMEN['columnas_salida'] - RESUMEN['columnas_entrada']} nuevas</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# ----------------------------
-# GRÁFICOS ESTÁTICOS (simulados con datos de ejemplo)
-# ----------------------------
-st.markdown("---")
-st.markdown("### 📈 Análisis exploratorio de datos")
+with col3:
+    st.markdown(f"""
+    <div class="card">
+        <div class="metric-label">Fraudes detectados</div>
+        <div class="metric-value">{RESUMEN['fraudes']:,}</div>
+        <div class="metric-change red">{RESUMEN['porcentaje_fraude']:.2f}% del total</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-col_chart1, col_chart2 = st.columns(2)
+with col4:
+    st.markdown(f"""
+    <div class="card">
+        <div class="metric-label">Particiones (Parquet)</div>
+        <div class="metric-value">{RESUMEN['particiones']}</div>
+        <div class="metric-change blue">por tipo</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-with col_chart1:
-    # Gráfico de barras simulado
-    import pandas as pd
-    import numpy as np
-    np.random.seed(42)
-    data = pd.DataFrame({
-        'amount': np.random.gamma(2, 50, 1000),
-        'fraud': np.random.choice([0,1], 1000, p=[0.9,0.1])
-    })
-    fraud_data = data[data['fraud'] == 1]['amount']
-    non_fraud_data = data[data['fraud'] == 0]['amount']
-    fig_hist = go.Figure()
-    fig_hist.add_trace(go.Histogram(x=non_fraud_data, name='No fraude', marker_color='#3b82f6', opacity=0.6))
-    fig_hist.add_trace(go.Histogram(x=fraud_data, name='Fraude', marker_color='#ef4444', opacity=0.6))
-    fig_hist.update_layout(
-        barmode='overlay',
-        title='Distribución de montos',
-        xaxis_title='Monto (€)',
-        yaxis_title='Frecuencia',
-        height=300,
-        margin=dict(l=20, r=20, t=40, b=20),
-        legend=dict(orientation='h', y=1.1)
-    )
-    st.plotly_chart(fig_hist, use_container_width=True, config={'displayModeBar': False})
+# Gráfico de fraude por tipo
+fraudes_por_tipo = RESUMEN['fraudes_por_tipo']
+tipos = list(fraudes_por_tipo.keys())
+cantidades = list(fraudes_por_tipo.values())
 
-with col_chart2:
-    # Gráfico de tipos de transacción
-    tipos = ['Pago', 'Transferencia', 'Retiro', 'Compra en línea']
-    counts = [400, 200, 100, 300]
-    fraud_counts = [40, 50, 20, 30]
-    fig_bar = go.Figure()
-    fig_bar.add_trace(go.Bar(x=tipos, y=counts, name='No fraude', marker_color='#3b82f6', opacity=0.7))
-    fig_bar.add_trace(go.Bar(x=tipos, y=fraud_counts, name='Fraude', marker_color='#ef4444', opacity=0.7))
-    fig_bar.update_layout(
-        barmode='group',
-        title='Transacciones por tipo',
-        xaxis_title='Tipo',
-        yaxis_title='Cantidad',
-        height=300,
-        margin=dict(l=20, r=20, t=40, b=20),
-        legend=dict(orientation='h', y=1.1)
-    )
-    st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+fig = go.Figure(data=[
+    go.Bar(x=tipos, y=cantidades, marker_color=['#ef4444' if t in ['TRANSFER','CASH_OUT'] else '#94a3b8' for t in tipos])
+])
+fig.update_layout(
+    title="Fraudes por tipo de transacción",
+    xaxis_title="Tipo",
+    yaxis_title="Número de fraudes",
+    height=300,
+    margin=dict(l=20, r=20, t=40, b=20),
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    font=dict(color='#1e293b')
+)
+st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-# ----------------------------
-# PIE DE PÁGINA
-# ----------------------------
+# Descripción del proyecto
 st.markdown("""
-<div style="text-align: center; margin-top: 2rem; color: #94a3b8; font-size: 0.8rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
-    Sistema de Detección de Fraude Financiero · Interfaz de demostración
+<div class="card">
+    <h3>📌 Resumen del proyecto</h3>
+    <p>Este proyecto implementa un <strong>pipeline ETL distribuido</strong> sobre el dataset <strong>PaySim</strong> (6.362.620 transacciones) 
+    para la detección de fraude financiero. Los datos se limpian, transforman y enriquecen con variables de dominio, 
+    y se almacenan en formato <strong>Parquet con compresión Snappy</strong>, particionado por tipo de transacción.</p>
+    <p><strong>Arquitectura:</strong> Raw Data → Bronze → Silver → Gold → Storage.</p>
+    <p><strong>Resultado:</strong> 22 columnas finales (11 nuevas), sin pérdida de registros, y preparado para Machine Learning (Fase III).</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Navegación rápida
+st.markdown("""
+<div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-top: 1rem;">
+    <a href="/Pipeline" target="_self" style="background:#3b82f6; color:white; padding:0.5rem 1.5rem; border-radius:40px; text-decoration:none; font-weight:500;">▶ Ver Pipeline ETL</a>
+    <a href="/Datos" target="_self" style="background:#1e293b; color:white; padding:0.5rem 1.5rem; border-radius:40px; text-decoration:none; font-weight:500;">📊 Explorar Datos</a>
+    <a href="/Modelo" target="_self" style="background:#0f172a; color:white; padding:0.5rem 1.5rem; border-radius:40px; text-decoration:none; font-weight:500;">🤖 Simular Modelo</a>
 </div>
 """, unsafe_allow_html=True)
