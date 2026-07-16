@@ -1,13 +1,13 @@
 import streamlit as st
 from styles import apply_custom_styles
-from utils.helpers import RESUMEN
+from utils.helpers import DASHBOARD_METRICS, TRANSACTION_TYPES
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="Detección de Fraude Financiero",
+    page_title="Dashboard - Detección de Fraude",
     page_icon="🔒",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 apply_custom_styles()
@@ -15,86 +15,87 @@ apply_custom_styles()
 # Encabezado
 st.markdown("""
 <div class="header">
-    <h1>🔒 Detección de Fraude Financiero</h1>
+    <h1>📊 Dashboard de Fraude Financiero</h1>
+    <span class="badge">Sistema de Alerta Temprana</span>
 </div>
 """, unsafe_allow_html=True)
 
-# Métricas principales en fila
-col1, col2, col3, col4 = st.columns(4)
-
+# Métricas principales
+col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     st.markdown(f"""
-    <div class="card">
-        <div class="metric-label">Filas procesadas</div>
-        <div class="metric-value">{RESUMEN['filas_salida']:,}</div>
-        <div class="metric-change green">✓ Sin pérdida</div>
+    <div class="card" style="text-align:center;">
+        <div class="metric-label">Total transacciones</div>
+        <div class="metric-value">{DASHBOARD_METRICS['total_transacciones']:,}</div>
     </div>
     """, unsafe_allow_html=True)
-
 with col2:
     st.markdown(f"""
-    <div class="card">
-        <div class="metric-label">Columnas finales</div>
-        <div class="metric-value">{RESUMEN['columnas_salida']}</div>
-        <div class="metric-change blue">+{RESUMEN['columnas_salida'] - RESUMEN['columnas_entrada']} nuevas</div>
+    <div class="card" style="text-align:center;">
+        <div class="metric-label">Normales</div>
+        <div class="metric-value" style="color:#16a34a;">{DASHBOARD_METRICS['normales']:,}</div>
     </div>
     """, unsafe_allow_html=True)
-
 with col3:
     st.markdown(f"""
-    <div class="card">
-        <div class="metric-label">Fraudes detectados</div>
-        <div class="metric-value">{RESUMEN['fraudes']:,}</div>
-        <div class="metric-change red">{RESUMEN['porcentaje_fraude']:.2f}% del total</div>
+    <div class="card" style="text-align:center;">
+        <div class="metric-label">Sospechosas</div>
+        <div class="metric-value" style="color:#ca8a04;">{DASHBOARD_METRICS['sospechosas']:,}</div>
     </div>
     """, unsafe_allow_html=True)
-
 with col4:
     st.markdown(f"""
-    <div class="card">
-        <div class="metric-label">Particiones (Parquet)</div>
-        <div class="metric-value">{RESUMEN['particiones']}</div>
-        <div class="metric-change blue">por tipo</div>
+    <div class="card" style="text-align:center;">
+        <div class="metric-label">Fraudes confirmados</div>
+        <div class="metric-value" style="color:#dc2626;">{DASHBOARD_METRICS['fraudes_confirmados']:,}</div>
+    </div>
+    """, unsafe_allow_html=True)
+with col5:
+    st.markdown(f"""
+    <div class="card" style="text-align:center;">
+        <div class="metric-label">Alertas pendientes</div>
+        <div class="metric-value" style="color:#2563eb;">{DASHBOARD_METRICS['alertas_pendientes']}</div>
     </div>
     """, unsafe_allow_html=True)
 
-# Gráfico de fraude por tipo
-fraudes_por_tipo = RESUMEN['fraudes_por_tipo']
-tipos = list(fraudes_por_tipo.keys())
-cantidades = list(fraudes_por_tipo.values())
+# Gráfico de transacciones por tipo
+st.markdown("""
+<div class="card">
+    <h3>📈 Transacciones por tipo</h3>
+""", unsafe_allow_html=True)
 
-fig = go.Figure(data=[
-    go.Bar(x=tipos, y=cantidades, marker_color=['#ef4444' if t in ['TRANSFER','CASH_OUT'] else '#94a3b8' for t in tipos])
-])
+tipos = list(TRANSACTION_TYPES.keys())
+cantidades = list(TRANSACTION_TYPES.values())
+colores = ['#ef4444' if t in ['TRANSFER','CASH_OUT'] else '#3b82f6' for t in tipos]
+
+fig = go.Figure(data=[go.Bar(x=tipos, y=cantidades, marker_color=colores)])
 fig.update_layout(
-    title="Fraudes por tipo de transacción",
-    xaxis_title="Tipo",
-    yaxis_title="Número de fraudes",
+    xaxis_title="Tipo de transacción",
+    yaxis_title="Cantidad",
     height=300,
-    margin=dict(l=20, r=20, t=40, b=20),
+    margin=dict(l=20, r=20, t=20, b=20),
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)',
     font=dict(color='#1e293b')
 )
 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+st.markdown("</div>", unsafe_allow_html=True)
 
-# Descripción del proyecto
+# Accesos rápidos
 st.markdown("""
 <div class="card">
-    <h3>📌 Resumen del proyecto</h3>
-    <p>Este proyecto implementa un <strong>pipeline ETL distribuido</strong> sobre el dataset <strong>PaySim</strong> (6.362.620 transacciones) 
-    para la detección de fraude financiero. Los datos se limpian, transforman y enriquecen con variables de dominio, 
-    y se almacenan en formato <strong>Parquet con compresión Snappy</strong>, particionado por tipo de transacción.</p>
-    <p><strong>Arquitectura:</strong> Raw Data → Bronze → Silver → Gold → Storage.</p>
-    <p><strong>Resultado:</strong> 22 columnas finales (11 nuevas), sin pérdida de registros, y preparado para Machine Learning (Fase III).</p>
+    <h3>⚡ Accesos rápidos</h3>
+    <div class="quick-access">
+        <a href="/An%C3%A1lisis_de_transacci%C3%B3n" target="_self">🔍 Analizar transacción</a>
+        <a href="/Carga_masiva" target="_self" class="secondary">📤 Cargar archivo</a>
+        <a href="/Alertas" target="_self" class="outline">🚨 Ver alertas sospechosas</a>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Navegación rápida
+# Pie de página
 st.markdown("""
-<div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-top: 1rem;">
-    <a href="/Pipeline" target="_self" style="background:#3b82f6; color:white; padding:0.5rem 1.5rem; border-radius:40px; text-decoration:none; font-weight:500;">▶ Ver Pipeline ETL</a>
-    <a href="/Datos" target="_self" style="background:#1e293b; color:white; padding:0.5rem 1.5rem; border-radius:40px; text-decoration:none; font-weight:500;">📊 Explorar Datos</a>
-    <a href="/Modelo" target="_self" style="background:#0f172a; color:white; padding:0.5rem 1.5rem; border-radius:40px; text-decoration:none; font-weight:500;">🤖 Simular Modelo</a>
+<div style="text-align:center; color:#94a3b8; font-size:0.8rem; border-top:1px solid #e2e8f0; padding-top:1rem; margin-top:1rem;">
+    Sistema de Detección de Fraude Financiero · Interfaz de demostración
 </div>
 """, unsafe_allow_html=True)
